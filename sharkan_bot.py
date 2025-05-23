@@ -116,14 +116,13 @@ def get_weight(message):
         weight = int(message.text)
         user_states[message.from_user.id]['weight'] = weight
         user_states[message.from_user.id]['stage'] = 'awaiting_goal'
-    try:
-    bot.reply_to(
-        message,
-        "Яка твоя мета?\n- схуднути\n- набрати масу\n- підтримувати форму"
-    )
-except Exception as e:
-    bot.reply_to(message, "Помилка при запиті мети.")
-    logging.error(f"[GOAL_QUESTION_ERROR] {e}")
+        bot.reply_to(
+            message,
+            "Яка твоя мета?\n- схуднути\n- набрати масу\n- підтримувати форму"
+        )
+    except Exception as e:
+        bot.reply_to(message, "Будь ласка, введи число.")
+        logging.error(f"[GOAL_QUESTION_ERROR] {e}")
 
 @bot.message_handler(func=lambda m: user_states.get(m.from_user.id, {}).get('stage') == 'awaiting_goal')
 def get_goal(message):
