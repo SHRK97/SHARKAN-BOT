@@ -116,31 +116,32 @@ def get_weight(message):
         weight = int(message.text)
         user_states[message.from_user.id]['weight'] = weight
         user_states[message.from_user.id]['stage'] = 'awaiting_goal'
-        bot.reply_to(
-            message,
-            "Яка твоя мета?\n- схуднути\n- набрати масу\n- підтримувати форму"
-        )
+        bot.reply_to(message, "Яка твоя мета?\n- схуднути\n- набрати масу\n- підтримувати форму")
     except Exception as e:
         bot.reply_to(message, "Будь ласка, введи число.")
-        logging.error(f"[GOAL_QUESTION_ERROR] {e}")
+        logging.error(f"[WEIGHT_INPUT_ERROR] {e}")
 
 @bot.message_handler(func=lambda m: user_states.get(m.from_user.id, {}).get('stage') == 'awaiting_goal')
 def get_goal(message):
-    goal = message.text.lower()
-    if goal not in ['схуднути', 'набрати масу', 'підтримувати форму']:
-        bot.reply_to(message, "Оберіть мету: схуднути, набрати масу, підтримувати форму.")
-        return
-    data = user_states.pop(message.from_user.id)
-    data['goal'] = goal
-    user_profiles[message.from_user.id] = data
-    save_profiles()
-    bot.reply_to(message, f"Профіль створено!
-Зріст: {data['height']} см
-Вага: {data['weight']} кг
-Мета: {data['goal']}")
-    notify_admin(f"Новий профіль:
-Зріст: {data['height']}, Вага: {data['weight']}, Мета: {data['goal']}")
-
+    try:
+        goal = message.text.lower()
+        if goal not in ['схуднути', 'набрати масу', 'підтримувати форму']:
+            bot.reply_to(message, "Оберіть мету: схуднути, набрати масу, підтримувати форму.")
+            return
+        data = user_states.pop(message.from_user.id)
+        data['goal'] = goal
+        user_profiles[message.from_user.id] = data
+        save_profiles()
+        bot.reply_to(
+            message,
+            f"Профіль створено!\nЗріст: {data['height']} см\nВага: {data['weight']} кг\nМета: {data['goal']}"
+        )
+        notify_admin(
+            f"Новий профіль:\nЗріст: {data['height']} см\nВага: {data['weight']} кг\nМета: {data['goal']}"
+        )
+    except Exception as e:
+        bot.reply_to(message, "Сталася помилка під час збереження профілю.")
+        logging.error(f"[GOAL_HANDLER_ERROR] {e}")
 @rate_limited()
 @bot.message_handler(commands=['мійпрофіль'])
 def show_profile(message):
