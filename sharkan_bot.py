@@ -5,6 +5,7 @@ from ratelimit import limits, RateLimitException
 from time import sleep
 from functools import wraps
 import time
+import telebot
 from datetime import datetime
 from telebot import types
 
