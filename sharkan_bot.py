@@ -2,6 +2,8 @@ import telebot
 import os
 import logging
 
+from ratelimit import limits, RateLimitException
+from t
 logging.basicConfig(
     filename='log.txt',
     level=logging.INFO,
@@ -11,6 +13,7 @@ logging.basicConfig(
 TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
+@rate_limited()
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     try:
@@ -18,6 +21,7 @@ def send_welcome(message):
     except Exception as e:
         logging.error(f"/start: {e}")
 
+@rate_limited()
 @bot.message_handler(commands=['status'])
 def status(message):
     try:
@@ -25,6 +29,8 @@ def status(message):
     except Exception as e:
         logging.error(f"/status: {e}")
 
+
+@rate_limited()
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
     try:
