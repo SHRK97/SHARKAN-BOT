@@ -1,7 +1,23 @@
 import telebot
 import os
 import logging
+from time import sleep
+from functools import wraps
 
+CALLS = 1
+PERIOD = 3
+
+def rate_limited(calls=CALLS, period=PERIOD):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(message, *args, **kwargs):
+            try:
+                return limits(calls=calls, period=period)(func)(message, *args, **kwargs)
+            except RateLimitException:
+                logging.warning(f"[FLOOD] Too many requests from {message.chat.id}")
+                bot.reply_to(message, "Too many requests. Please wait a moment.")
+        return wrapper
+    return decorator
 from ratelimit import limits, RateLimitException
 from t
 logging.basicConfig(
