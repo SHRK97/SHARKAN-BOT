@@ -31,7 +31,9 @@ def echo_all(message):
         bot.reply_to(message, "SHARKAN BOT received your message.")
     except Exception as e:
         logging.error(f"/echo_all: {e}")
-
+@bot.message_handler(commands=['ping'])
+def ping(message):
+    bot.reply_to(message, "PONG — бот на связи.")
 if __name__ == "__main__":
     print("Bot is running...")
     try:
