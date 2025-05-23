@@ -1,11 +1,21 @@
 import telebot
 import os
 import logging
+
+from ratelimit import limits, RateLimitException
 from time import sleep
 from functools import wraps
 
-CALLS = 1
-PERIOD = 3
+# Настройка логирования
+logging.basicConfig(
+    filename='log.txt',
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+)
+
+# Настройка защиты от флуда
+CALLS = 1  # 1 запрос
+PERIOD = 3  # в 3 секунды
 
 def rate_limited(calls=CALLS, period=PERIOD):
     def decorator(func):
@@ -18,17 +28,12 @@ def rate_limited(calls=CALLS, period=PERIOD):
                 bot.reply_to(message, "Too many requests. Please wait a moment.")
         return wrapper
     return decorator
-from ratelimit import limits, RateLimitException
-from t
-logging.basicConfig(
-    filename='log.txt',
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-)
 
+# Подключение токена и создание бота
 TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
+# Команда /start
 @rate_limited()
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -37,6 +42,7 @@ def send_welcome(message):
     except Exception as e:
         logging.error(f"/start: {e}")
 
+# Команда /status
 @rate_limited()
 @bot.message_handler(commands=['status'])
 def status(message):
@@ -45,7 +51,7 @@ def status(message):
     except Exception as e:
         logging.error(f"/status: {e}")
 
-
+# Ответ на любые другие сообщения
 @rate_limited()
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
@@ -54,6 +60,7 @@ def echo_all(message):
     except Exception as e:
         logging.error(f"/echo_all: {e}")
 
+# Запуск бота
 if __name__ == "__main__":
     print("Bot is running...")
     try:
