@@ -6,16 +6,28 @@ bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "Welcome to SHARKAN BOT. This bot is live 24/7!")
+    try:
+        bot.reply_to(message, "Welcome to SHARKAN BOT. This bot is live 24/7!")
+    except Exception as e:
+        print(f"[ERROR] /start: {e}")
 
 @bot.message_handler(commands=['status'])
 def status(message):
-    bot.reply_to(message, "SHARKAN BOT is active and running smoothly.")
+    try:
+        bot.reply_to(message, "SHARKAN BOT is active and running smoothly.")
+    except Exception as e:
+        print(f"[ERROR] /status: {e}")
 
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
-    bot.reply_to(message, "SHARKAN BOT received your message.")
+    try:
+        bot.reply_to(message, "SHARKAN BOT received your message.")
+    except Exception as e:
+        print(f"[ERROR] echo_all: {e}")
 
 if __name__ == "__main__":
     print("Bot is running...")
-    bot.infinity_polling()
+    try:
+        bot.infinity_polling()
+    except Exception as e:
+        print(f"[CRITICAL] Bot crashed: {e}")
