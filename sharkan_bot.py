@@ -1,35 +1,23 @@
 import os
 import json
 import logging
-from ratelimit import limits, RateLimitException
-from time import sleep
-from functools import wraps
 import time
-import telebot
 from datetime import datetime
+from functools import wraps
+from time import sleep
+
+from ratelimit import limits, RateLimitException
+import telebot
 from telebot import types
 
-# === Завантаження збережених профілів ===
-try:
-    with open("user_profiles.json", "r") as f:
-        user_profiles = json.load(f)
-except FileNotFoundError:
-    user_profiles = {}
-
-# === Функція збереження профілів ===
-def save_profiles():
-    try:
-        with open("user_profiles.json", "w") as f:
-            json.dump(user_profiles, f, indent=4, ensure_ascii=False)
-    except Exception as e:
-        logging.error(f"[SAVE_PROFILE_ERROR] {e}")
-
-# === Налаштування ===
+# === Константи ===
 ADMIN_ID = 693609628
 VERSION = "SHARKAN BOT v1.0 — 2025-05-23"
 CALLS = 1
 PERIOD = 3
 START_TIME = time.time()
+TOKEN = os.getenv("BOT_TOKEN")
+bot = telebot.TeleBot(TOKEN)
 user_states = {}
 
 # === Логування ===
@@ -39,7 +27,21 @@ logging.basicConfig(
     format='%(asctime)s [%(levelname)s] %(message)s',
 )
 
-# === Обмеження за часом ===
+# === Завантаження збережених профілів ===
+try:
+    with open("user_profiles.json", "r") as f:
+        user_profiles = json.load(f)
+except FileNotFoundError:
+    user_profiles = {}
+
+def save_profiles():
+    try:
+        with open("user_profiles.json", "w") as f:
+            json.dump(user_profiles, f, indent=4, ensure_ascii=False)
+    except Exception as e:
+        logging.error(f"[SAVE_PROFILE_ERROR] {e}")
+
+# === Обмеження запитів ===
 def rate_limited(calls=CALLS, period=PERIOD):
     def decorator(func):
         @wraps(func)
@@ -52,11 +54,7 @@ def rate_limited(calls=CALLS, period=PERIOD):
         return wrapper
     return decorator
 
-# === Токен ===
-TOKEN = os.getenv("BOT_TOKEN")
-bot = telebot.TeleBot(TOKEN)
-
-# === Логи адмінові ===
+# === Повідомлення адміну ===
 def notify_admin(text):
     try:
         bot.send_message(ADMIN_ID, f"[ALERT] {text}")
@@ -75,22 +73,16 @@ def send_log_to_admin(text):
 def send_welcome(message):
     if message.from_user.id != ADMIN_ID:
         return
-    try:
-        bot.reply_to(message, "Welcome to SHARKAN BOT. This bot is live 24/7!")
-        send_log_to_admin(f"/start від {message.from_user.first_name} ({message.from_user.id})")
-    except Exception as e:
-        logging.error(f"/start ERROR: {e}")
+    bot.reply_to(message, "Welcome to SHARKAN BOT. This bot is live 24/7!")
+    send_log_to_admin(f"/start від {message.from_user.first_name} ({message.from_user.id})")
 
 @rate_limited()
 @bot.message_handler(commands=['status'])
 def status(message):
     if message.from_user.id != ADMIN_ID:
         return
-    try:
-        bot.reply_to(message, "SHARKAN BOT працює стабільно.")
-        send_log_to_admin(f"/status від {message.from_user.first_name} ({message.from_user.id})")
-    except Exception as e:
-        logging.error(f"/status ERROR: {e}")
+    bot.reply_to(message, "SHARKAN BOT працює стабільно.")
+    send_log_to_admin(f"/status від {message.from_user.first_name} ({message.from_user.id})")
 
 @rate_limited()
 @bot.message_handler(commands=['профіль'])
@@ -107,7 +99,7 @@ def get_height(message):
         user_states[message.from_user.id]['height'] = height
         user_states[message.from_user.id]['stage'] = 'awaiting_weight'
         bot.reply_to(message, "Введи свою вагу у кілограмах (наприклад, 70):")
-    except:
+    except ValueError:
         bot.reply_to(message, "Будь ласка, введи число.")
 
 @bot.message_handler(func=lambda m: user_states.get(m.from_user.id, {}).get('stage') == 'awaiting_weight')
@@ -117,9 +109,8 @@ def get_weight(message):
         user_states[message.from_user.id]['weight'] = weight
         user_states[message.from_user.id]['stage'] = 'awaiting_goal'
         bot.reply_to(message, "Яка твоя мета?\n- схуднути\n- набрати масу\n- підтримувати форму")
-    except Exception as e:
+    except ValueError:
         bot.reply_to(message, "Будь ласка, введи число.")
-        logging.error(f"[WEIGHT_INPUT_ERROR] {e}")
 
 @bot.message_handler(func=lambda m: user_states.get(m.from_user.id, {}).get('stage') == 'awaiting_goal')
 def get_goal(message):
@@ -140,8 +131,9 @@ def get_goal(message):
             f"Новий профіль:\nЗріст: {data['height']} см\nВага: {data['weight']} кг\nМета: {data['goal']}"
         )
     except Exception as e:
-        bot.reply_to(message, "Сталася помилка під час збереження профілю.")
+        bot.reply_to(message, "Помилка при збереженні профілю.")
         logging.error(f"[GOAL_HANDLER_ERROR] {e}")
+
 @rate_limited()
 @bot.message_handler(commands=['мійпрофіль'])
 def show_profile(message):
@@ -149,10 +141,13 @@ def show_profile(message):
         return
     profile = user_profiles.get(message.from_user.id)
     if profile:
-        bot.reply_to(message, f"**Профіль:**
-- Зріст: {profile['height']} см
-- Вага: {profile['weight']} кг
-- Мета: {profile['goal']}", parse_mode="Markdown")
+        text = (
+            f"**Профіль:**\n"
+            f"- Зріст: {profile['height']} см\n"
+            f"- Вага: {profile['weight']} кг\n"
+            f"- Мета: {profile['goal']}"
+        )
+        bot.reply_to(message, text, parse_mode="Markdown")
     else:
         bot.reply_to(message, "Профіль не знайдено. Введіть /профіль")
 
@@ -167,8 +162,7 @@ def run_command(message):
         cal_text = f"Приблизно: {calories:.0f} ккал (за 1 км бігу)"
     else:
         cal_text = "Введіть профіль через /профіль, щоб бачити калорії."
-    bot.reply_to(message, f"Режим БІГ активовано!
-{cal_text}")
+    bot.reply_to(message, f"Режим БІГ активовано!\n{cal_text}")
 
 # === Запуск ===
 if __name__ == "__main__":
