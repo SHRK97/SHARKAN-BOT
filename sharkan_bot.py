@@ -116,10 +116,7 @@ def get_weight(message):
         weight = int(message.text)
         user_states[message.from_user.id]['weight'] = weight
         user_states[message.from_user.id]['stage'] = 'awaiting_goal'
-        bot.reply_to(message, "Яка твоя мета?
-- схуднути
-- набрати масу
-- підтримувати форму")
+bot.reply_to(message, "Яка твоя мета?\n- схуднути\n- набрати масу\n- підтримувати форму")
     except:
         bot.reply_to(message, "Будь ласка, введи число.")
 
