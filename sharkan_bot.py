@@ -2,6 +2,7 @@ import telebot
 import os
 import logging
 
+
 logging.basicConfig(
     filename='log.txt',
     level=logging.INFO,
