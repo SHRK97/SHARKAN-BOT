@@ -1,27 +1,9 @@
 import telebot
 import os
 import logging
+
 from ratelimit import limits, RateLimitException
-from time import sleep
-from functools import wraps
-
-# Защита от флуда: максимум 1 запрос в 3 секунды от одного пользователя
-CALLS = 1
-PERIOD = 3
-
-def rate_limited(calls=CALLS, period=PERIOD):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(message, *args, **kwargs):
-            try:
-                return limits(calls=calls, period=period)(func)(message, *args, **kwargs)
-            except RateLimitException:
-                logging.warning(f"[FLOOD] Too many requests from {message.chat.id}")
-                bot.reply_to(message, "Too many requests. Please wait a moment.")
-        return wrapper
-    return decorator
-
-# Логирование
+from t
 logging.basicConfig(
     filename='log.txt',
     level=logging.INFO,
@@ -47,13 +29,6 @@ def status(message):
     except Exception as e:
         logging.error(f"/status: {e}")
 
-@rate_limited()
-@bot.message_handler(commands=['ping'])
-def ping(message):
-    try:
-        bot.reply_to(message, "PONG — бот на связи.")
-    except Exception as e:
-        logging.error(f"/ping: {e}")
 
 @rate_limited()
 @bot.message_handler(func=lambda message: True)
