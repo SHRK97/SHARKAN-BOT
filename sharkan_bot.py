@@ -2,12 +2,12 @@ import telebot
 import os
 import logging
 
+
 logging.basicConfig(
     filename='log.txt',
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
 )
-
 TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
